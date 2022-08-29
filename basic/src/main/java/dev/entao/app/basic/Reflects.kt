@@ -108,6 +108,7 @@ fun KMutableProperty<*>.setInstValue(inst: Any, value: Any?) {
 
 val KProperty<*>.isPublic: Boolean get() = this.visibility == KVisibility.PUBLIC
 
+val KProperty<*>.returnClass:KClass<*> get() = this.returnType.classifier as? KClass<*> ?: error("NO return type: $this")
 
 inline fun <reified T : Any> KClass<T>.newInstance(argCls: KClass<*>, argValue: Any): T {
     val c = this.constructors.first { it.parameters.size == 1 && it.parameters.first().type.classifier == argCls }
