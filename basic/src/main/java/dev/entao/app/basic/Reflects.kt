@@ -3,6 +3,7 @@ package dev.entao.app.basic
 import kotlin.jvm.internal.CallableReference
 import kotlin.jvm.internal.FunctionReference
 import kotlin.reflect.*
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaMethod
@@ -18,6 +19,16 @@ val KType.isGeneric: Boolean get() = this.arguments.isNotEmpty()
 
 val KFunction<*>.paramName1: String? get() = this.valueParameters.firstOrNull()?.name
 
+inline fun <reified T : Any> KClass<T>.newInstance(argCls: KClass<*>, argValue: Any): T {
+    val c = this.constructors.first {
+        it.parameters.size == 1 && argCls.isSubclassOf(it.parameters.first().type.classifier as KClass<*>)
+    }
+    return c.call(argValue)
+}
+
+inline fun <reified T : Any> KClass<T>.newInstance(argValue: Any): T {
+    return this.newInstance(argValue::class, argValue)
+}
 
 /*
  * class A{
@@ -86,7 +97,6 @@ fun KType.isClass(kcls: KClass<*>): Boolean {
 }
 
 
-
 fun KProperty<*>.getInstValue(inst: Any): Any? {
     if (this.getter.parameters.isEmpty()) {
         return this.getter.call()
@@ -108,12 +118,7 @@ fun KMutableProperty<*>.setInstValue(inst: Any, value: Any?) {
 
 val KProperty<*>.isPublic: Boolean get() = this.visibility == KVisibility.PUBLIC
 
-val KProperty<*>.returnClass:KClass<*> get() = this.returnType.classifier as? KClass<*> ?: error("NO return type: $this")
-
-inline fun <reified T : Any> KClass<T>.newInstance(argCls: KClass<*>, argValue: Any): T {
-    val c = this.constructors.first { it.parameters.size == 1 && it.parameters.first().type.classifier == argCls }
-    return c.call(argValue)
-}
+val KProperty<*>.returnClass: KClass<*> get() = this.returnType.classifier as? KClass<*> ?: error("NO return type: $this")
 
 
 @Suppress("UNCHECKED_CAST")
